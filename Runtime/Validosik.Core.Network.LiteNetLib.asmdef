@@ -1,0 +1,19 @@
+{
+    "name": "Validosik.Core.Network.LiteNetLib",
+    "rootNamespace": "Validosik.Core.Network.LiteNetLib",
+    "references": [
+        "Validosik.Core.Network",
+        "LiteNetLib"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "LITENETLIB_ENABLED"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

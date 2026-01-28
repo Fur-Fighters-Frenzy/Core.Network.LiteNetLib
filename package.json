@@ -1,0 +1,24 @@
+{
+  "name": "validosik.core.network.litenetlib",
+  "displayName": "Core.Network LiteNetLib Adapter",
+  "version": "0.0.1",
+  "unity": "6000.0",
+  "description": "Adapter that integrates LiteNetLib with Core.Network abstractions (INetClient/INetServer, ChannelKind, PlayerId, HandshakeDto). Provides LiteClientAdapter/LiteServerAdapter and ChannelKind <-> DeliveryMethod mapping while keeping higher-level networking code transport-agnostic.",
+  "author": { "name": "validosik" },
+  "dependencies": {
+    "validosik.core.network": "0.0.1",
+    "com.revenantx.litenetlib": "1.3.5"
+  },
+  "keywords": [
+    "core-network",
+    "litenetlib",
+    "adapter",
+    "transport",
+    "abstraction",
+    "client-server",
+    "channels",
+    "handshake",
+    "udp",
+    "unity"
+  ]
+}
