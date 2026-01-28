@@ -14,6 +14,12 @@
     "defineConstraints": [
         "LITENETLIB_ENABLED"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.revenantx.litenetlib",
+            "expression": "1.3.5",
+            "define": "LITENETLIB_ENABLED"
+        }
+    ],
     "noEngineReferences": false
 }
