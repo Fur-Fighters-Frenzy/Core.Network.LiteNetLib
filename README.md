@@ -4,7 +4,7 @@ LiteNetLib adapter for **Core.Network**.
 
 This package bridges **LiteNetLib** (`NetManager`, `NetPeer`, `DeliveryMethod`) to the `Core.Network` transport contracts (`INetClient` / `INetServer`) and unified channels (`ChannelKind`). It lets higher-level networking code stay transport-agnostic while using LiteNetLib as the runtime transport.
 
-- [Core.Network](https://github.com/Fur-Fighters-Frenzy/Core.Network)
+- [Core.Network (base)](https://github.com/Fur-Fighters-Frenzy/Core.Network)
 - [LiteNetLib](https://github.com/RevenantX/LiteNetLib)
 
 > **Status:** WIP
