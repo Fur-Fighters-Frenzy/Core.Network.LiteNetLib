@@ -57,7 +57,7 @@ namespace Validosik.Core.Network.LiteNetLib
             }
 
             var (delivery, channel) = _map.ToLite(ch);
-            _serverPeer.Send(raw.ToArray(), channel, delivery);
+            _serverPeer.Send(raw, channel, delivery);
         }
 
         // --- INetEventListener ---
@@ -83,11 +83,12 @@ namespace Validosik.Core.Network.LiteNetLib
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber,
             DeliveryMethod deliveryMethod)
         {
-            var data = reader.GetRemainingBytes();
-            reader.Recycle();
-
+            var data = reader.GetRemainingBytesMemory();
             var kind = _map.FromLite(deliveryMethod, channelNumber);
+
             OnServerMessage?.Invoke(data, kind);
+
+            reader.Recycle();
         }
 
         public void OnNetworkReceiveUnconnected(System.Net.IPEndPoint remoteEndPoint, NetPacketReader reader,

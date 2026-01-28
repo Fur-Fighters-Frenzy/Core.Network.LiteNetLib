@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using Validosik.Core.Network.Dto;
 using Validosik.Core.Network.Transport;
 using Validosik.Core.Network.Transport.Interfaces;
 using Validosik.Core.Network.Types;
@@ -53,7 +54,7 @@ namespace Validosik.Core.Network.LiteNetLib
             }
 
             var (delivery, channel) = _map.ToLite(ch);
-            peer.Send(raw.ToArray(), channel, delivery);
+            peer.Send(raw, channel, delivery);
         }
 
         public void Broadcast(ReadOnlySpan<byte> raw, ChannelKind ch = ChannelKind.ReliableOrdered)
@@ -66,7 +67,7 @@ namespace Validosik.Core.Network.LiteNetLib
             var (delivery, channel) = _map.ToLite(ch);
             foreach (var (peer, _) in _registry.AllConnections)
             {
-                peer.Send(raw.ToArray(), channel, delivery);
+                peer.Send(raw, channel, delivery);
             }
         }
 
@@ -77,9 +78,8 @@ namespace Validosik.Core.Network.LiteNetLib
             {
                 return;
             }
-            
+
             var (delivery, channel) = _map.ToLite(ch);
-            var bytes = raw.ToArray();
 
             foreach (var (peer, pid) in _registry.AllConnections)
             {
@@ -88,10 +88,10 @@ namespace Validosik.Core.Network.LiteNetLib
                     continue;
                 }
 
-                peer.Send(bytes, channel, delivery);
+                peer.Send(raw, channel, delivery);
             }
         }
-        
+
         public void BroadcastExcept(PlayerId[] except, ReadOnlySpan<byte> raw,
             ChannelKind ch = ChannelKind.ReliableOrdered)
         {
@@ -113,7 +113,6 @@ namespace Validosik.Core.Network.LiteNetLib
             }
 
             var (delivery, channel) = _map.ToLite(ch);
-            var bytes = raw.ToArray();
 
             foreach (var (peer, pid) in _registry.AllConnections)
             {
@@ -122,7 +121,7 @@ namespace Validosik.Core.Network.LiteNetLib
                     continue;
                 }
 
-                peer.Send(bytes, channel, delivery);
+                peer.Send(raw, channel, delivery);
             }
         }
 
@@ -165,13 +164,13 @@ namespace Validosik.Core.Network.LiteNetLib
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber,
             DeliveryMethod deliveryMethod)
         {
-            var data = reader.GetRemainingBytes();
-            reader.Recycle();
+            var data = reader.GetRemainingBytesMemory();
 
             if (!_registry.TryGetPid(peer, out var pid))
             {
-                if (!HandshakeDto.TryFromBytes(data, out var handshakeDto))
+                if (!HandshakeDto.TryFromBytes(data.Span, out var handshakeDto))
                 {
+                    reader.Recycle();
                     return;
                 }
 
@@ -184,17 +183,36 @@ namespace Validosik.Core.Network.LiteNetLib
                     pid,
                     token
                 );
-                var payload = handshake.ToBytes();
-                var envelope = NetEnvelope.Pack((ushort)ServerMsgType.Handshake, payload);
+
+                Span<byte> handshakeBytes = stackalloc byte[HandshakeDto.Size];
+                if (!handshake.TryWrite(handshakeBytes, out var hw) || hw != HandshakeDto.Size)
+                {
+                    reader.Recycle();
+                    return;
+                }
+
+                // byte[]: [u16 msgType][u16 payloadLen][payload...]
+                // Pack handshake into NetEnvelope without allocations (31 bytes total here).
+                Span<byte> envelope = stackalloc byte[4 + HandshakeDto.Size];
+                envelope[0] = (byte)ServerMsgType.Handshake;
+                envelope[1] = 0;
+                envelope[2] = (byte)HandshakeDto.Size;
+                envelope[3] = 0;
+                handshakeBytes.CopyTo(envelope.Slice(4));
+
                 Send(pid, envelope);
 
                 OnClientConnected?.Invoke(pid);
+
+                reader.Recycle();
                 return;
             }
 
             var kind = _map.FromLite(deliveryMethod, channelNumber);
 
             OnClientMessage?.Invoke(pid, data, kind);
+
+            reader.Recycle();
         }
 
         public void OnNetworkReceiveUnconnected(System.Net.IPEndPoint remoteEndPoint, NetPacketReader reader,
